@@ -109,12 +109,12 @@
              + '<p class="muted">Credentials open as you clear each Domain.</p></div>';
         html += '<h2>Start learning</h2>';
         html += '<div class="tile"><h3>' + DOMAINS[0] + '</h3><p>Begin Domain 1, the base of the ladder.</p>'
-             + '<a class="cta" href="domain1.html">Enter Domain 1</a></div>';
+             + '<a class="cta" href="domain1.html">Digital Literacy 101</a> <a class="cta" href="ml101.html">Media and Information Literacy 101</a></div>';
       }
       else if (d.role === "ta"){
         html += '<h2>Cohort</h2><div class="tile"><h3>' + (d.cohort || "Cohort") + '</h3>'
              + '<p>You are signed in as an assistant. You can support learners in this cohort.</p>'
-             + '<a class="cta" href="domain1.html">Enter Domain 1</a></div>';
+             + '<a class="cta" href="domain1.html">Digital Literacy 101</a> <a class="cta" href="ml101.html">Media and Information Literacy 101</a></div>';
       }
       else { // teacher / user
         html += '<h2>Your cohorts</h2>';
@@ -126,7 +126,7 @@
           html += '<div class="tile"><p class="empty">No cohorts yet. Create your first cohort to issue subcodes and register learners.</p></div>';
         }
         html += '<h2>Curriculum</h2><div class="tile"><h3>' + DOMAINS[0] + '</h3><p>Preview Domain 1 before your session.</p>'
-             + '<a class="cta" href="domain1.html">Enter Domain 1</a></div>';
+             + '<a class="cta" href="domain1.html">Digital Literacy 101</a> <a class="cta" href="ml101.html">Media and Information Literacy 101</a></div>';
       }
 
       view.innerHTML = html;

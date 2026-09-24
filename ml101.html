@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No Trojan Academy — Media and Information Literacy 101</title>
+<style>
+  :root{
+    --bg:#04070a; --panel:#0a1410; --line:#16241c;
+    --green:#37e07a; --green-dim:#1f8f4e; --red:#e0403a;
+    --ink:#dcefe2; --muted:#7f9d8b; --chip:#0e1b14; --field:#071009;
+  }
+  *{box-sizing:border-box}
+  .hidden{display:none}
+  html,body{margin:0;min-height:100%}
+  body{
+    background:
+      radial-gradient(1100px 500px at 50% -10%, rgba(55,224,122,.06), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    padding:0 16px 48px;
+  }
+  .wrap{max-width:1120px;margin:0 auto}
+
+  /* header (mirrors dashboard) */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 0 14px;border-bottom:1px solid var(--line)}
+  .brand{font-weight:800;letter-spacing:.12em;color:var(--red);font-size:17px}
+  .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:.22em;text-transform:uppercase;margin-top:4px}
+  .who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .role{padding:4px 10px;border:1px solid var(--green-dim);border-radius:999px;color:var(--green);font-size:11px;text-transform:capitalize}
+  .signout{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px}
+  .signout:hover{color:var(--ink)}
+
+  /* course title bar */
+  .crumb{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;letter-spacing:.06em;margin:18px 0 4px}
+  .crumb a{color:var(--muted);text-decoration:none}
+  .crumb a:hover{color:var(--green)}
+  .coursebar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .coursebar h1{margin:0;font-size:22px;letter-spacing:.01em}
+  .coursebar p{margin:4px 0 0;color:var(--muted);font-size:13px}
+  .progress{min-width:220px;flex:0 0 auto}
+  .progress .bar{height:8px;background:var(--field);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+  .progress .fill{height:100%;width:0;background:var(--green);transition:width .3s}
+  .progress .lbl{color:var(--muted);font-size:12px;margin-top:6px;text-align:right}
+
+  /* two-panel viewer */
+  .viewer{display:grid;grid-template-columns:340px 1fr;gap:16px;margin-top:18px;align-items:start}
+
+  /* contents panel */
+  .contents{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column}
+  .contents .chd{padding:14px 16px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+  .clist{overflow:auto}
+  .chap{border-bottom:1px solid var(--line)}
+  .chap:last-child{border-bottom:none}
+  .chaphd{width:100%;text-align:left;background:transparent;border:none;color:var(--ink);padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .chaphd:hover{background:rgba(55,224,122,.05)}
+  .chaphd .cv{color:var(--muted);transition:transform .2s;font-size:11px}
+  .chap.open .chaphd .cv{transform:rotate(90deg)}
+  .items{display:none;padding:2px 0 8px}
+  .chap.open .items{display:block}
+  .item{width:100%;text-align:left;background:transparent;border:none;color:var(--ink);padding:9px 16px 9px 40px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;position:relative}
+  .item:hover{background:rgba(55,224,122,.05)}
+  .item[aria-current="true"]{background:rgba(55,224,122,.10);color:var(--green)}
+  .item .st{position:absolute;left:16px;width:16px;height:16px;border:1.5px solid var(--green-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--green)}
+  .item.done .st{background:var(--green);border-color:var(--green);color:#04120a}
+  .item .dur{margin-left:auto;color:var(--muted);font-size:12px}
+  .item.quiz{color:var(--ink)}
+  .item.quiz .st{border-radius:4px}
+
+  /* main panel */
+  .main{min-width:0}
+  .stage{background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .video{position:relative;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
+  .video .ph{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--muted)}
+  .play{width:64px;height:64px;border-radius:50%;border:2px solid var(--green);display:flex;align-items:center;justify-content:center}
+  .play::after{content:"";border-left:18px solid var(--green);border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px}
+  .video .cap{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));padding:16px;font-size:15px}
+  .video video{width:100%;height:100%;display:block;background:#000}
+
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:14px}
+  .tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:10px 6px;margin-right:14px;font-size:13px;cursor:pointer}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--green)}
+  .panel{padding:16px 2px;font-size:14px;line-height:1.6;color:var(--ink)}
+  .panel.hidden{display:none}
+  .panel .empty{color:var(--muted)}
+  .rowbtns{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .btn{background:var(--green);color:#04120a;font-weight:700;border:none;border-radius:10px;padding:11px 16px;font-size:14px;cursor:pointer}
+  .btn:hover{background:#45ef88}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{border-color:var(--green-dim);color:var(--green)}
+  .note{width:100%;min-height:120px;background:var(--field);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:12px;font:inherit;font-size:14px;resize:vertical}
+  .instructor{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+  .avatar{width:44px;height:44px;border-radius:50%;background:var(--chip);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--green);font-weight:800}
+  .instructor b{font-size:14px}
+  .instructor span{display:block;color:var(--muted);font-size:12px}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* quiz engine */
+  .qz{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .qz h3{margin:0 0 4px;font-size:18px}
+  .qz .meta{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .q{padding:14px 0;border-top:1px solid var(--line)}
+  .qtext{font-size:14px;font-weight:600;margin-bottom:10px}
+  .opt{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;cursor:pointer;font-size:14px}
+  .opt:hover{border-color:var(--green-dim)}
+  .opt input{margin-top:3px}
+  .opt.correct{border-color:var(--green);background:rgba(55,224,122,.10)}
+  .opt.wrong{border-color:var(--red);background:rgba(224,64,58,.10)}
+  .result{padding:12px 14px;border-radius:10px;margin-bottom:16px;font-size:14px}
+  .result.pass{border:1px solid var(--green);background:rgba(55,224,122,.10);color:var(--green)}
+  .result.fail{border:1px solid var(--red);background:rgba(224,64,58,.10);color:#ff9a96}
+
+  /* ===== mobile only ===== */
+  @media (max-width:820px){
+    .viewer{grid-template-columns:1fr}
+    .contents{position:static;max-height:none;order:2}
+    .clist{max-height:340px}
+    .main{order:1}
+    .coursebar h1{font-size:19px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">NO TROJAN<small>Community Impact Academy</small></div>
+      <div class="who">
+        <span id="acct"></span>
+        <span class="role" id="role"></span>
+        <button class="signout" id="signout">Sign out</button>
+      </div>
+    </header>
+
+    <div class="crumb"><a href="dashboard.html">Dashboard</a> <span>›</span> <span>Domain 1</span> <span>›</span> <span>Media and Information Literacy 101</span></div>
+    <div class="coursebar">
+      <div>
+        <h1>Media and Information Literacy 101</h1>
+        <p>Domain 1: Media, Information &amp; Digital Literacy</p>
+      </div>
+      <div class="progress">
+        <div class="bar"><div class="fill" id="fill"></div></div>
+        <div class="lbl" id="plbl">0 of 0 complete</div>
+      </div>
+    </div>
+
+    <div class="viewer">
+      <aside class="contents">
+        <div class="chd">Contents</div>
+        <div class="clist" id="clist"></div>
+      </aside>
+
+      <section class="main">
+        <div id="lessonview">
+        <div class="stage">
+          <div class="video" id="video">
+            <div class="ph"><div class="play"></div><div>Video coming soon</div></div>
+            <div class="cap" id="cap"></div>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+          <button class="tab" role="tab" data-tab="notebook" aria-selected="false">Notebook</button>
+          <button class="tab" role="tab" data-tab="transcript" aria-selected="false">Transcript</button>
+        </div>
+
+        <div class="panel" id="p-overview">
+          <div id="ov"></div>
+          <div class="rowbtns">
+            <button class="btn" id="markbtn">Mark complete</button>
+            <button class="btn ghost" id="prevbtn">Previous</button>
+            <button class="btn ghost" id="nextbtn">Next</button>
+          </div>
+          <div class="instructor">
+            <div class="avatar">NoT</div>
+            <div><b>NoT™ Community Impact Academy</b><span>Instructor</span></div>
+          </div>
+        </div>
+
+        <div class="panel hidden" id="p-notebook">
+          <p class="empty">Your notes for this lesson. They stay on this device.</p>
+          <textarea class="note" id="note" placeholder="Type your notes here"></textarea>
+        </div>
+
+        <div class="panel hidden" id="p-transcript">
+          <div id="tr" class="empty">The transcript appears here once the lesson video is added.</div>
+        </div>
+        </div>
+        <div id="quizview" class="hidden"></div>
+      </section>
+    </div>
+  </div>
+
+<script>
+  // Point this at your deployed Academy Worker (same as index.html and dashboard.html).
+  const API = "https://notrojan-academy.ryanalanrogers.workers.dev";
+  // Rendered lesson videos live in the public R2 bucket, one MP4 per lesson id.
+  const VIDEO_BASE = "https://pub-9b74ab2c580a45cdb4eab4e8a40b4557.r2.dev/lessons/";
+
+  const token = sessionStorage.getItem("not_token");
+  if (!token) { window.location.href = "index.html"; }
+
+  document.getElementById("signout").addEventListener("click", function(){
+    sessionStorage.clear();
+    window.location.href = "index.html";
+  });
+
+  // Course structure for Digital Literacy 101. Video and transcript fields fill in later.
+  const COURSE = {
+    id: "ml101",
+    chapters: [
+      { id:"intro", title:"Introduction", lessons:[
+        { id:"welcome", title:"Welcome to Media and Information Literacy 101", dur:"1:20", overview:"Media runs your feed, your news, and your day. This course teaches you to read it, question it, and see how it works." },
+        { id:"howitworks", title:"How this course works", dur:"1:30", overview:"Short lessons, a quiz after each chapter, and a final that earns your certificate and belt." }
+      ]},
+      { id:"c1", title:"Chapter 1: What Is Media and Information Literacy?", lessons:[
+        { id:"c1l1", title:"What is media and information literacy?", dur:"2:00", overview:"Media and information literacy is the skill of reading media with a questioning eye instead of taking it at face value." },
+        { id:"c1l2", title:"Media is everywhere", dur:"2:20", overview:"Posts, ads, news, videos, games, all of it is media sending you a message." },
+        { id:"c1l3", title:"The five questions that unlock any message", dur:"2:40", overview:"Five questions turn any post into something you can analyze." },
+        { id:"c1l4", title:"Access, analyze, evaluate, create, act", dur:"2:30", overview:"The five moves of a media literate person, from finding media to acting on it." }
+      ], quiz:{ id:"c1q", title:"Chapter 1 Quiz" }},
+      { id:"c2", title:"Chapter 2: Who Made This, and Why?", lessons:[
+        { id:"c2l1", title:"Who created this message?", dur:"2:40", overview:"Every message has an author, and knowing who they are tells you a lot." },
+        { id:"c2l2", title:"Follow the money and the motive", dur:"3:00", overview:"Ask who profits from a message and why it was sent." },
+        { id:"c2l3", title:"Spotting the source behind the post", dur:"2:40", overview:"How to find who is really behind what you see." },
+        { id:"c2l4", title:"What do they want you to do?", dur:"2:40", overview:"Every message has a goal, a call to action you can name." }
+      ], quiz:{ id:"c2q", title:"Chapter 2 Quiz" }},
+      { id:"c3", title:"Chapter 3: How Media Hooks You", lessons:[
+        { id:"c3l1", title:"Techniques that grab attention", dur:"2:40", overview:"The hooks media uses to catch and hold your eyes." },
+        { id:"c3l2", title:"Emotion as a hook", dur:"2:40", overview:"Fear, outrage, and FOMO spread fast, and that is on purpose." },
+        { id:"c3l3", title:"Clickbait, thumbnails, and headlines", dur:"2:40", overview:"How the packaging is built to make you click." },
+        { id:"c3l4", title:"The algorithm and why you keep scrolling", dur:"3:00", overview:"What the feed is really designed to do, and how to take back control." }
+      ], quiz:{ id:"c3q", title:"Chapter 3 Quiz" }},
+      { id:"c4", title:"Chapter 4: What Is the Message Really Saying?", lessons:[
+        { id:"c4l1", title:"Values and behaviors being promoted", dur:"2:40", overview:"Media teaches what is normal and cool, often without saying it." },
+        { id:"c4l2", title:"Representation and stereotypes", dur:"3:00", overview:"Who gets shown, and how, sends a message of its own." },
+        { id:"c4l3", title:"What gets left out", dur:"2:40", overview:"Omission and framing shape your view as much as what is shown." },
+        { id:"c4l4", title:"Explicit versus implicit messages", dur:"2:40", overview:"The message said out loud, and the one suggested underneath." }
+      ], quiz:{ id:"c4q", title:"Chapter 4 Quiz" }},
+      { id:"c5", title:"Chapter 5: Different People, Different Takes", lessons:[
+        { id:"c5l1", title:"Audience and interpretation", dur:"2:40", overview:"The same message lands differently for different people." },
+        { id:"c5l2", title:"Bias, including your own", dur:"3:00", overview:"Everyone leans a certain way, and spotting your own lean is a superpower." },
+        { id:"c5l3", title:"Context changes meaning", dur:"2:40", overview:"Pull something out of context and the meaning can flip." },
+        { id:"c5l4", title:"Echo chambers and seeing other views", dur:"2:40", overview:"How feeds trap you in one view, and how to break out." }
+      ], quiz:{ id:"c5q", title:"Chapter 5 Quiz" }},
+      { id:"c6", title:"Chapter 6: Misinformation, Propaganda & Manipulation", lessons:[
+        { id:"c6l1", title:"Misinformation versus disinformation", dur:"2:40", overview:"Wrong by accident, or wrong on purpose, and why the difference matters." },
+        { id:"c6l2", title:"Propaganda techniques", dur:"2:40", overview:"The classic moves used to push an agenda." },
+        { id:"c6l3", title:"Manipulation and emotional exploitation", dur:"2:40", overview:"How feelings get used to bypass your thinking." },
+        { id:"c6l4", title:"Fact-checking like a pro", dur:"3:00", overview:"Simple moves to check a claim before you believe or share it." }
+      ], quiz:{ id:"c6q", title:"Chapter 6 Quiz" }},
+      { id:"c7", title:"Chapter 7: AI, Deepfakes & Synthetic Media", lessons:[
+        { id:"c7l1", title:"How AI creates content", dur:"2:40", overview:"What AI is doing when it writes, draws, or speaks." },
+        { id:"c7l2", title:"Deepfakes and synthetic media", dur:"2:40", overview:"Fake video and audio that can look and sound real." },
+        { id:"c7l3", title:"Spotting AI-generated fakes", dur:"2:40", overview:"The tells that give a synthetic image or video away." },
+        { id:"c7l4", title:"Evaluating AI output", dur:"3:00", overview:"AI can be wrong or biased, so you check it like any other source." }
+      ], quiz:{ id:"c7q", title:"Chapter 7 Quiz" }},
+      { id:"c8", title:"Chapter 8: From Consumer to Creator", lessons:[
+        { id:"c8l1", title:"Your media, your influence", dur:"2:20", overview:"When you post, you become a creator with real influence." },
+        { id:"c8l2", title:"Creating responsibly", dur:"2:40", overview:"Making media that is honest, fair, and mindful of its impact." },
+        { id:"c8l3", title:"Your civic voice", dur:"2:40", overview:"Using media to take part in your community and the issues you care about." },
+        { id:"c8l4", title:"Your media and information literacy going forward", dur:"2:20", overview:"How to keep these habits sharp for life." }
+      ], quiz:{ id:"c8q", title:"Chapter 8 Quiz" }}
+    ],
+    finalQuiz:{ id:"final", title:"Media and Information Literacy 101 Final Quiz" }
+  };
+
+  // Question bank. Draws are random per attempt. c1 authored (batch 1, 10). Others seeded pending authoring.
+  const QBANK = {
+    c1: [
+      { q:"Media and information literacy is best described as:", opts:["Watching a lot of TV","The ability to access, analyze, evaluate, create, and act with media","Owning the newest phone","Posting every day"], a:1 },
+      { q:"Which of these counts as media?", opts:["Only newspapers","Only the news","Posts, ads, videos, games, and news, all of it","Only school textbooks"], a:2 },
+      { q:"The main goal of media and information literacy is to:", opts:["Believe everything you see","Think critically about the media you consume and create","Avoid all screens","Get more followers"], a:1 },
+      { q:"In media and information literacy, a message means:", opts:["A text from a friend only","Any piece of media that carries meaning","A private email only","A phone notification"], a:1 },
+      { q:"Being media literate means you:", opts:["Take media at face value","Ask questions about media instead of just believing it","Share everything fast","Only trust videos"], a:1 },
+      { q:"Which is a media and information literacy skill?", opts:["Scrolling faster","Evaluating whether a source is trustworthy","Turning up the volume","Memorizing ads"], a:1 },
+      { q:"The five media and information literacy questions are a tool to:", opts:["Make videos longer","Analyze any message","Gain followers","Speed up your phone"], a:1 },
+      { q:"Saying all media are constructions means:", opts:["Media is built by people making choices, not a plain window on reality","Media is always true","Media is made only by machines","Media cannot be trusted at all"], a:0 },
+      { q:"Media and information literacy matters because media:", opts:["Never affects anyone","Influences what we think, feel, and do","Is only entertainment","Is always harmless"], a:1 },
+      { q:"A media literate person meets a viral post by:", opts:["Sharing it instantly","Pausing to question it before believing or sharing","Believing it because it is popular","Ignoring all posts"], a:1 }
+    ],
+    c2: [
+      { q:"Media and information literacy Question 1 asks:", opts:["How long is it?","Who created this message?","How many likes?","What time was it posted?"], a:1 },
+      { q:"Knowing who made a message helps you:", opts:["Understand their goals and possible bias","Watch it faster","Skip the ads","Get more views"], a:0 },
+      { q:"Authorship refers to:", opts:["The comments section","Who created and is behind the message","The background music","The file size"], a:1 },
+      { q:"Media and information literacy Question 5 asks:", opts:["Why is this message being sent?","What color is it?","How many shares?","Who liked it?"], a:0 },
+      { q:"Most commercial media exists mainly to:", opts:["Give away free stuff","Make money, often through attention or ads","Teach for free","Avoid an audience"], a:1 },
+      { q:"A post trying to sell you something is:", opts:["Never an ad","Advertising, even when it looks like regular content","Always labeled clearly","Only found on TV"], a:1 },
+      { q:"An influencer paid to promote a product is doing:", opts:["A favor","Sponsored content, which is an ad","A news report","A public service"], a:1 },
+      { q:"Follow the money means:", opts:["Count your cash","Ask who profits from the message","Buy the product","Ignore the source"], a:1 },
+      { q:"A news outlet owned by a big company may:", opts:["Never cover anything","Have interests that shape its coverage","Always be neutral","Refuse all ads"], a:1 },
+      { q:"When a message hides who made it, you should:", opts:["Trust it more","Be more skeptical","Share it faster","Assume it is official"], a:1 },
+      { q:"A call to action is:", opts:["The music in a video","What the message wants you to do next","The number of likes","The video length"], a:1 },
+      { q:"Political content is often designed to:", opts:["Shape your opinion or vote","Sell snacks","Teach math","Fix your phone"], a:0 },
+      { q:"Native advertising is:", opts:["An ad made to look like normal content","A nature documentary","A local newscast","A privacy setting"], a:0 },
+      { q:"Knowing the purpose of a message helps you:", opts:["Decide how much to trust it","Make it louder","Get more followers","Skip reading it"], a:0 },
+      { q:"The strongest first question about any message is:", opts:["How many views?","Who made it, and why?","What is trending?","How long is it?"], a:1 }
+    ],
+    c3: [
+      { q:"Media and information literacy Question 2 asks:", opts:["What techniques attract attention?","Who liked it?","How long is it?","When was it made?"], a:0 },
+      { q:"A hook is:", opts:["A technique used to grab and hold your attention","A type of camera","A privacy setting","A news source"], a:0 },
+      { q:"Content that makes you angry often spreads because:", opts:["It is always true","Strong emotion drives sharing","It is boring","Nobody sees it"], a:1 },
+      { q:"Clickbait is:", opts:["A careful, honest headline","A headline built to make you click, often overpromising","A privacy tool","A fact-check site"], a:1 },
+      { q:"FOMO, the fear of missing out, is used to:", opts:["Calm you down","Pressure you to act or keep watching","Teach patience","Slow the feed"], a:1 },
+      { q:"A video thumbnail is chosen mainly to:", opts:["Get you to click the video","Save storage","Hide the content","Slow your phone"], a:0 },
+      { q:"Outrage and fear are used in media because:", opts:["They grab attention fast","They are relaxing","Nobody reacts to them","They are always accurate"], a:0 },
+      { q:"A recommendation algorithm decides:", opts:["What content shows up in your feed","Your phone battery life","The weather","Your password"], a:0 },
+      { q:"Feed algorithms are mainly built to:", opts:["Keep you watching or scrolling","Get you to log off","Protect your time","Show less content"], a:0 },
+      { q:"To a platform, engagement means:", opts:["Likes, comments, shares, and watch time","Your grades","Your location","Your contacts"], a:0 },
+      { q:"Autoplay is designed to:", opts:["Keep you watching without choosing to","Save your data","End your session","Mute the sound"], a:0 },
+      { q:"A limited time or countdown message pushes:", opts:["Urgency, to make you act fast","Calm reflection","A slower pace","A refund"], a:0 },
+      { q:"Emotional music in a video is:", opts:["A technique to shape how you feel","A privacy setting","A fact-check","An accident"], a:0 },
+      { q:"Recognizing a hook lets you:", opts:["Enjoy content without being controlled by it","Turn off the internet","Ignore all media","Believe everything"], a:0 },
+      { q:"The healthiest response to a strong emotional pull online is to:", opts:["React instantly","Pause and notice the technique","Share it right away","Turn up the volume"], a:1 }
+    ],
+    c4: [
+      { q:"Media and information literacy Question 4 asks:", opts:["What values and behaviors are promoted?","How many likes?","Who posted first?","How long is it?"], a:0 },
+      { q:"Media promotes values by:", opts:["Showing what is normal, cool, or rewarded","Listing rules out loud","Avoiding all people","Staying silent"], a:0 },
+      { q:"A stereotype is:", opts:["An accurate profile","An oversimplified idea about a group of people","A camera setting","A fact-check"], a:1 },
+      { q:"Representation in media means:", opts:["Who is shown, and how they are shown","The video length","The file type","The upload time"], a:0 },
+      { q:"When a group is missing from media, that is:", opts:["Meaningless","Omission, which sends a message too","Always an accident","A privacy setting"], a:1 },
+      { q:"Framing is:", opts:["How a story is presented, which shapes how you see it","The frame around a TV","A type of ad","A camera brand"], a:0 },
+      { q:"An implicit message is:", opts:["Stated out loud","Suggested, not said directly","Always written down","A caption"], a:1 },
+      { q:"Ads often sell:", opts:["A feeling or lifestyle, not just the product","Only facts","Nothing at all","Free items"], a:0 },
+      { q:"What media leaves out can:", opts:["Shape your view as much as what it shows","Never matter","Only help you","Fix the story"], a:0 },
+      { q:"Repeated images of one ideal look can:", opts:["Make people feel bad about not matching it","Improve everyone's mood","Have no effect","Slow your phone"], a:0 },
+      { q:"Values in media are usually:", opts:["Modeled through characters and stories, not stated","Printed as a list","Read aloud first","Kept secret by law"], a:0 },
+      { q:"Noticing whose story is told helps you:", opts:["See whose voice is centered or missing","Count the likes","Speed up the video","Skip the message"], a:0 },
+      { q:"A norm is:", opts:["A behavior treated as normal or expected","A type of file","A camera angle","A privacy law"], a:0 },
+      { q:"Critically reading a message means asking:", opts:["What is this teaching me to want or believe?","How do I get more likes?","How long is it?","Who is online?"], a:0 },
+      { q:"Media shapes culture over time by:", opts:["Normalizing certain behaviors and values","Deleting all content","Turning off feeds","Blocking creators"], a:0 }
+    ],
+    c5: [
+      { q:"Media and information literacy Question 3 asks:", opts:["How might people interpret this differently?","How many views?","Who paid for it?","When was it posted?"], a:0 },
+      { q:"Two people can read the same post differently because:", opts:["They bring different experiences","The post changes for each person","One of them is wrong","The internet is broken"], a:0 },
+      { q:"Bias is:", opts:["A lean toward one side or view","A type of camera","A privacy tool","A fact-check site"], a:0 },
+      { q:"Who has bias?", opts:["Only the news","Everyone, including you","Only companies","Nobody online"], a:1 },
+      { q:"Confirmation bias is:", opts:["Favoring info that agrees with what you already believe","Checking every source","Changing your mind daily","Ignoring your feelings"], a:0 },
+      { q:"Context means:", opts:["The surrounding situation that gives a message meaning","The video quality","The number of ads","The font"], a:0 },
+      { q:"A clip taken out of context can:", opts:["Mislead by hiding the full picture","Always tell the truth","Improve accuracy","Add sources"], a:0 },
+      { q:"An echo chamber is:", opts:["A space where you mostly hear views like your own","A recording studio","A privacy setting","A news channel"], a:0 },
+      { q:"A filter bubble forms when:", opts:["Algorithms show you mostly what you already like","You read many views","You log off","You clear your history once"], a:0 },
+      { q:"Seeking other perspectives helps you:", opts:["Understand an issue more fully","Get more followers","Post faster","Avoid thinking"], a:0 },
+      { q:"The same ad may affect a child and an adult:", opts:["Exactly the same","Differently","Never","Only on TV"], a:1 },
+      { q:"Empathy in media and information literacy means:", opts:["Considering how others might experience a message","Ignoring other people","Only trusting yourself","Copying every view"], a:0 },
+      { q:"Your interpretation of media is shaped by:", opts:["Your background, age, and experiences","Only the weather","Nothing at all","The device brand"], a:0 },
+      { q:"To break out of an echo chamber, you can:", opts:["Follow a range of credible sources","Mute everyone","Only read one site","Turn off comments"], a:0 },
+      { q:"Recognizing your own bias makes you:", opts:["A sharper, fairer thinker","Less able to decide","Unable to post","Always right"], a:0 }
+    ],
+    c6: [
+      { q:"Misinformation is:", opts:["False info shared, whether or not on purpose","Always the truth","A privacy setting","A type of ad only"], a:0 },
+      { q:"Disinformation is:", opts:["False info spread on purpose to deceive","An honest mistake","A fact-check","A news source"], a:0 },
+      { q:"Propaganda is:", opts:["Media designed to push a specific agenda","Neutral reporting","A camera setting","A privacy law"], a:0 },
+      { q:"A common propaganda technique is:", opts:["Citing every source","Repeating a message until it feels true","Showing all sides","Linking to critics"], a:1 },
+      { q:"A bandwagon appeal says:", opts:["Think for yourself","Everyone is doing it, so you should too","Check the facts","Slow down"], a:1 },
+      { q:"To fact-check a claim, you:", opts:["Check it against trusted, independent sources","Trust the first result","Ask nobody","Share it first"], a:0 },
+      { q:"A reverse image search helps you:", opts:["Find where a photo really came from","Make the photo bigger","Add a filter","Delete the photo"], a:0 },
+      { q:"Emotional manipulation works by:", opts:["Pushing feelings to bypass your thinking","Giving you all the facts","Slowing you down","Citing sources"], a:0 },
+      { q:"A reliable fact-checking site is one that:", opts:["Hides its methods","Shows its sources and methods","Never explains","Only posts opinions"], a:1 },
+      { q:"The best defense against manipulation is:", opts:["Reacting fast","Slowing down and checking before you react","Sharing first","Trusting your gut only"], a:1 }
+    ],
+    c7: [
+      { q:"A deepfake is:", opts:["AI-made video or audio that fakes a real person","A deep-sea video","A privacy setting","A camera lens"], a:0 },
+      { q:"AI generates content by:", opts:["Predicting likely words or pixels from training data","Copying one website","Asking a human each time","Guessing at random only"], a:0 },
+      { q:"AI can be biased because:", opts:["It learns from human-made data that carries bias","It has feelings","It reads minds","It is always neutral"], a:0 },
+      { q:"An AI hallucination is:", opts:["A cool feature","When AI states something false as if it were true","A privacy tool","A type of camera"], a:1 },
+      { q:"Synthetic media is:", opts:["Media created or altered by AI","Only handwritten notes","A live newscast","A printed book"], a:0 },
+      { q:"A sign of an AI-generated image can be:", opts:["Odd hands, warped text, or too-perfect details","A real date stamp","A credited photographer","A clear source"], a:0 },
+      { q:"Before trusting AI-generated facts, you should:", opts:["Verify them with reliable sources","Share them at once","Assume they are right","Ignore the topic"], a:0 },
+      { q:"AI-made content can spread misinformation because:", opts:["It can produce convincing fakes fast","It never makes mistakes","It always cites sources","It cannot make images"], a:0 },
+      { q:"To judge an AI answer, check:", opts:["Its sources and whether other sources agree","How fast it replied","How long it is","Its font"], a:0 },
+      { q:"Media and information literacy applies to AI by:", opts:["Questioning who made it, why, and whether it is true","Trusting it fully","Avoiding it forever","Only using it for games"], a:0 }
+    ],
+    c8: [
+      { q:"Media and information literacy includes the skill to:", opts:["Only watch quietly","Create and act, not only analyze","Avoid posting","Memorize ads"], a:1 },
+      { q:"When you post, you become:", opts:["Only a viewer","A media creator with influence","Invisible online","A fact-check site"], a:1 },
+      { q:"Creating responsibly means:", opts:["Being honest, fair, and mindful of impact","Posting anything for likes","Copying others' work","Hiding your sources"], a:0 },
+      { q:"Before you share a claim, you should:", opts:["Check whether it is true","Share it faster than others","Add more emojis","Tag more people"], a:0 },
+      { q:"Giving credit to sources when you create:", opts:["Is honest and respects creators","Wastes time","Is against the rules","Hides your work"], a:0 },
+      { q:"Your influence online is:", opts:["Zero unless you are famous","Real, even with a small audience","Only about money","Impossible to have"], a:1 },
+      { q:"Using media for good can look like:", opts:["Sharing accurate info and lifting others","Spreading rumors","Trolling for fun","Faking your posts"], a:0 },
+      { q:"Civic engagement through media means:", opts:["Taking part in your community and issues responsibly","Ignoring the news","Avoiding all opinions","Only posting selfies"], a:0 },
+      { q:"A responsible creator considers:", opts:["How their content affects others","Only their view count","Nothing but speed","How to trick people"], a:0 },
+      { q:"The goal of media and information literacy is to make you:", opts:["A thoughtful consumer and a responsible creator","A faster scroller","A bigger spender","A silent viewer"], a:0 }
+    ]
+  };
+
+  // flat list of playable/selectable items in order
+  const ITEMS = [];
+  COURSE.chapters.forEach(function(ch){
+    ch.lessons.forEach(function(ls){ ITEMS.push({ type:"lesson", chap:ch.id, data:ls }); });
+    if (ch.quiz) ITEMS.push({ type:"quiz", chap:ch.id, data:ch.quiz });
+  });
+  ITEMS.push({ type:"quiz", chap:"final", data:COURSE.finalQuiz, final:true });
+
+  const PROG_KEY = "not_ml101_done";
+  const NOTE_KEY = "not_ml101_note_";
+  function loadDone(){ try{ return JSON.parse(sessionStorage.getItem(PROG_KEY) || "{}"); }catch(e){ return {}; } }
+  function saveDone(d){ sessionStorage.setItem(PROG_KEY, JSON.stringify(d)); }
+  let done = loadDone();
+  let current = ITEMS[0];
+
+  const clist = document.getElementById("clist");
+
+  function lessonCount(){ return ITEMS.filter(function(i){ return i.type==="lesson"; }).length; }
+  function doneCount(){ return ITEMS.filter(function(i){ return i.type==="lesson" && done[i.data.id]; }).length; }
+
+  function renderContents(){
+    let html = "";
+    COURSE.chapters.forEach(function(ch, idx){
+      const open = (current && current.chap === ch.id) || (idx===0 && !current);
+      html += '<div class="chap' + (open ? " open" : "") + '" data-chap="' + ch.id + '">';
+      html += '<button class="chaphd" data-chap="' + ch.id + '"><span>' + ch.title + '</span><span class="cv">▶</span></button>';
+      html += '<div class="items">';
+      ch.lessons.forEach(function(ls){
+        const isCur = current && current.type==="lesson" && current.data.id===ls.id;
+        html += '<button class="item' + (done[ls.id] ? " done" : "") + '" data-id="' + ls.id + '" aria-current="' + (isCur?"true":"false") + '">'
+             + '<span class="st">' + (done[ls.id] ? "✓" : "") + '</span>'
+             + '<span>' + ls.title + '</span><span class="dur">' + ls.dur + '</span></button>';
+      });
+      if (ch.quiz){
+        const isCur = current && current.type==="quiz" && current.data.id===ch.quiz.id;
+        html += '<button class="item quiz' + (done[ch.quiz.id] ? " done" : "") + '" data-id="' + ch.quiz.id + '" aria-current="' + (isCur?"true":"false") + '">'
+             + '<span class="st">' + (done[ch.quiz.id] ? "\u2713" : "") + '</span><span>' + ch.quiz.title + '</span><span class="dur">Quiz</span></button>';
+      }
+      html += '</div></div>';
+    });
+    // final quiz as its own row
+    const fCur = current && current.type==="quiz" && current.final;
+    html += '<div class="chap"><button class="item quiz' + (done[COURSE.finalQuiz.id] ? " done" : "") + '" data-id="' + COURSE.finalQuiz.id + '" aria-current="' + (fCur?"true":"false") + '" style="padding-left:16px">'
+         + '<span class="st">' + (done[COURSE.finalQuiz.id] ? "\u2713" : "") + '</span><span>' + COURSE.finalQuiz.title + '</span><span class="dur">Quiz</span></button></div>';
+    clist.innerHTML = html;
+  }
+
+  function findItemById(id){ return ITEMS.find(function(i){ return i.data.id === id; }); }
+
+  function setProgress(){
+    const total = lessonCount(); const dn = doneCount();
+    document.getElementById("fill").style.width = total ? (dn/total*100)+"%" : "0%";
+    document.getElementById("plbl").textContent = dn + " of " + total + " complete";
+  }
+
+  const ov = document.getElementById("ov");
+  const cap = document.getElementById("cap");
+  const videoBox = document.getElementById("video");
+  const markbtn = document.getElementById("markbtn");
+  const note = document.getElementById("note");
+  const tr = document.getElementById("tr");
+
+  function renderMain(){
+    if (!current) return;
+    const lessonview = document.getElementById("lessonview");
+    const quizview = document.getElementById("quizview");
+    if (current.type === "lesson"){
+      lessonview.classList.remove("hidden");
+      quizview.classList.add("hidden");
+      const ls = current.data;
+      cap.textContent = ls.title;
+      // video slot: placeholder until a source is added
+      var vurl = ls.video || (VIDEO_BASE + ls.id + ".mp4");
+      videoBox.innerHTML = '<video controls playsinline src="' + vurl + '"></video><div class="cap">' + ls.title + '</div>';
+      ov.innerHTML = '<p>' + (ls.overview || "") + '</p>';
+      markbtn.style.display = "";
+      markbtn.textContent = done[ls.id] ? "Completed" : "Mark complete";
+      note.value = sessionStorage.getItem(NOTE_KEY + ls.id) || "";
+      tr.textContent = ls.transcript ? ls.transcript : "The transcript appears here once the lesson video is added.";
+    } else {
+      lessonview.classList.add("hidden");
+      quizview.classList.remove("hidden");
+      renderQuiz(current);
+    }
+    renderContents();
+  }
+
+  // ---- quiz engine ----
+  let quizState = null;
+  function shuffle(a){ a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function poolFor(item){
+    if (item.final){ let all=[]; Object.keys(QBANK).forEach(function(k){ all = all.concat(QBANK[k]); }); return { pool:all, draw:20 }; }
+    return { pool:(QBANK[item.chap] || []), draw:5 };
+  }
+  function renderQuiz(item){
+    const pf = poolFor(item);
+    const n = Math.min(pf.draw, pf.pool.length);
+    const drawn = shuffle(pf.pool).slice(0, n).map(function(q){
+      const order = shuffle(q.opts.map(function(_, i){ return i; }));
+      return { q:q.q, opts: order.map(function(i){ return q.opts[i]; }), a: order.indexOf(q.a) };
+    });
+    quizState = { item:item, qs: drawn };
+    drawQuiz();
+  }
+  function drawQuiz(){
+    const item = quizState.item, qs = quizState.qs;
+    let h = '<div class="qz"><h3>' + item.data.title + '</h3>';
+    h += '<div class="meta">' + qs.length + ' questions \u00b7 70% to pass \u00b7 retakes open</div>';
+    h += '<div id="qresult"></div>';
+    qs.forEach(function(q, qi){
+      h += '<div class="q"><div class="qtext">' + (qi+1) + '. ' + q.q + '</div>';
+      q.opts.forEach(function(opt, oi){
+        h += '<label class="opt" data-q="' + qi + '" data-o="' + oi + '"><input type="radio" name="q' + qi + '" value="' + oi + '"><span>' + opt + '</span></label>';
+      });
+      h += '</div>';
+    });
+    h += '<div class="rowbtns"><button class="btn" id="submitquiz">Submit quiz</button> <button class="btn ghost" id="retakequiz" style="display:none">Retake</button></div></div>';
+    document.getElementById("quizview").innerHTML = h;
+    document.getElementById("submitquiz").addEventListener("click", submitQuiz);
+  }
+  function submitQuiz(){
+    const item = quizState.item, qs = quizState.qs;
+    let correct = 0;
+    qs.forEach(function(q, qi){
+      const sel = document.querySelector('input[name="q' + qi + '"]:checked');
+      const chosen = sel ? parseInt(sel.value, 10) : -1;
+      document.querySelectorAll('.opt[data-q="' + qi + '"]').forEach(function(l){
+        const oi = parseInt(l.dataset.o, 10);
+        if (oi === q.a) l.classList.add("correct");
+        if (oi === chosen && chosen !== q.a) l.classList.add("wrong");
+        const inp = l.querySelector('input'); if (inp) inp.disabled = true;
+      });
+      if (chosen === q.a) correct++;
+    });
+    const pct = Math.round(correct / qs.length * 100);
+    const passed = pct >= 70;
+    const res = document.getElementById("qresult");
+    res.className = 'result ' + (passed ? 'pass' : 'fail');
+    res.textContent = (passed ? 'Passed. ' : 'Not yet. ') + correct + ' of ' + qs.length + ' correct (' + pct + '%). '
+      + (passed ? (item.final ? 'You cleared the Media and Information Literacy 101 final.' : 'Chapter cleared.') : 'You need 70% to pass. Retake for a fresh set.');
+    document.getElementById("submitquiz").style.display = "none";
+    const rt = document.getElementById("retakequiz");
+    rt.style.display = "";
+    rt.addEventListener("click", function(){ renderQuiz(item); });
+    if (passed){
+      done[item.data.id] = true; saveDone(done); setProgress(); renderContents();
+      if (item.final){ sessionStorage.setItem("not_ml101_final_passed", "1"); issueCredential(pct); }
+    }
+  }
+
+  // On a passing final, ask the Worker to issue the certificate and belt to the account.
+  async function issueCredential(score){
+    try{
+      const res = await fetch(API + "/complete", {
+        method:"POST",
+        headers:{ "authorization":"Bearer " + token, "content-type":"application/json" },
+        body: JSON.stringify({ course: COURSE.id, score: score })
+      });
+      const d = await res.json();
+      if (d && d.ok){
+        const r = document.getElementById("qresult");
+        if (r) r.textContent += " Your certificate and belt are issued to your account.";
+      }
+    } catch(e){ /* the pass is recorded locally; issuance can be retried later */ }
+  }
+
+  function selectById(id){
+    const it = findItemById(id);
+    if (!it) return;
+    current = it;
+    renderMain();
+  }
+
+  // events: chapter toggle and item select (delegated)
+  clist.addEventListener("click", function(e){
+    const head = e.target.closest(".chaphd");
+    if (head){
+      const chap = clist.querySelector('.chap[data-chap="' + head.dataset.chap + '"]');
+      if (chap) chap.classList.toggle("open");
+      return;
+    }
+    const item = e.target.closest(".item");
+    if (item){ selectById(item.dataset.id); }
+  });
+
+  markbtn.addEventListener("click", function(){
+    if (current.type !== "lesson") return;
+    done[current.data.id] = true;
+    saveDone(done);
+    setProgress();
+    renderMain();
+  });
+
+  note.addEventListener("input", function(){
+    if (!current) return;
+    sessionStorage.setItem(NOTE_KEY + current.data.id, note.value);
+  });
+
+  function move(delta){
+    const idx = ITEMS.indexOf(current);
+    const ni = idx + delta;
+    if (ni >= 0 && ni < ITEMS.length){ current = ITEMS[ni]; renderMain(); }
+  }
+  document.getElementById("prevbtn").addEventListener("click", function(){ move(-1); });
+  document.getElementById("nextbtn").addEventListener("click", function(){ move(1); });
+
+  // tabs
+  const tabs = [...document.querySelectorAll(".tab")];
+  const panels = { overview:document.getElementById("p-overview"), notebook:document.getElementById("p-notebook"), transcript:document.getElementById("p-transcript") };
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){
+      tabs.forEach(function(x){ x.setAttribute("aria-selected", String(x===t)); });
+      Object.keys(panels).forEach(function(k){ panels[k].classList.toggle("hidden", k !== t.dataset.tab); });
+    });
+  });
+
+  // populate account and role from the Worker, guard the token
+  async function boot(){
+    try{
+      const res = await fetch(API + "/me", { headers: { "authorization": "Bearer " + token } });
+      const d = await res.json();
+      if (!d.ok){ window.location.href = "index.html"; return; }
+      document.getElementById("acct").textContent = d.account || "";
+      document.getElementById("role").textContent = (d.role === "ta") ? "assistant" : (d.role || "");
+    } catch(e){
+      // stay on the page so a learner can still read lessons if /me is briefly unavailable
+    }
+    setProgress();
+    renderMain();
+  }
+  boot();
+</script>
+</body>
+</html>
